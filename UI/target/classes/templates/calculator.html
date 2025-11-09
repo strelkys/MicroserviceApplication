@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Калькулятор</title>
+    <link href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2>Обработка запроса</h2>
+    <form id="calcForm">
+        <div class="mb-3">
+            <label for="expression" class="form-label">Введите запрос</label>
+            <input type="text" class="form-control" id="expression" name="expression" required>
+        </div>
+        <button type="submit" class="btn btn-success">Отправить</button>
+    </form>
+
+    <div id="result" class="mt-4 alert alert-info" style="display:none;"></div>
+</div>
+
+<script>
+    document.getElementById('calcForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const expression = document.getElementById('expression').value;
+
+        const response = await fetch('/api/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expression: expression })
+        });
+
+        const data = await response.json();
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        if (response.ok) {
+            resultDiv.className = 'mt-4 alert alert-success';
+            resultDiv.textContent = `Результат: ${data.result}`;
+        } else {
+            resultDiv.className = 'mt-4 alert alert-danger';
+            resultDiv.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+ru\streltsov\microserviceapplication\apigateway\JwtValidationFilter.class
+ru\streltsov\microserviceapplication\apigateway\util\JwtUtil.class
+ru\streltsov\microserviceapplication\apigateway\ApiGatewayApplication.class

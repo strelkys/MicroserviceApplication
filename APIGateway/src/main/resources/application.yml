@@ -1,0 +1,32 @@
+## YAML Template.
+server:
+  port: 8083
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # Маршрут к AuthService
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/auth/**
+        # Маршрут к Data Service (заглушка)
+        - id: data-service-stub
+          uri: http://localhost:8082/stub
+          predicates:
+            - Path=/api/**
+          filters:
+            - name: SetStatus
+              args:
+                status: 200
+            - name: SetResponseHeader
+              args:
+                name: Content-Type
+                value: application/json
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
