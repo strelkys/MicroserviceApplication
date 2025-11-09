@@ -4,22 +4,32 @@
  */
 package ru.streltsov.microserviceapplication.dataservice.model;
 
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
 /**
  *
  * @author Александр
  */
 
-
 @Entity
+@Table(name = "app_user") 
 public class User {
+
     @Id
     private String username;
 
     public String getUsername() {
         return username;
+    }
+
+    public User() {
+    }
+
+    public User(String username, String passwordHash) {
+        this.username = username;
+        this.passwordHash = passwordHash;
     }
 
     public void setUsername(String username) {
@@ -35,5 +45,5 @@ public class User {
     }
     private String passwordHash;
 
-    // getters/setters
+    
 }

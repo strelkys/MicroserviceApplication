@@ -4,13 +4,16 @@
 
 package ru.streltsov.microserviceapplication.dataservice;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 /**
  *
  * @author Александр
  */
-public class Dataservice {
-
+@SpringBootApplication
+public class DataServiceApplication {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SpringApplication.run(DataServiceApplication.class, args);
     }
 }
