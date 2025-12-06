@@ -45,7 +45,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('jwtToken', data.token);
-                    window.location.href = '/calculator';
+                    window.location.href = '/reqvestPage';
                 } else {
                     alert('Ошибка входа');
                 }

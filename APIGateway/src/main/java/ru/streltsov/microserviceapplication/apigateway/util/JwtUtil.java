@@ -27,6 +27,7 @@ public class JwtUtil {
     private Long expiration;
 
     public String getUsernameFromToken(String token) {
+        System.out.println(this.getClass() + " getUsernameFromToken is run");
         Claims claims = getAllClaimsFromToken(token);
         return claims.getSubject();
     }

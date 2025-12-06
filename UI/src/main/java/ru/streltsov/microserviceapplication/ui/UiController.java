@@ -23,8 +23,8 @@ public class UiController {
         return "login";
     }
 
-    @GetMapping("/calculator")
-    public String calculator() {
-        return "calculator";
+    @GetMapping("/reqvestPage")
+    public String reqvestPage() {
+        return "reqvestPage";
     }
 }
