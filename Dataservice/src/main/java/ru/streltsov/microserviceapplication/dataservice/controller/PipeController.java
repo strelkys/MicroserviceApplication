@@ -18,7 +18,7 @@ import java.util.List;
  */
 
 @RestController
-@RequestMapping("/api/pipes")
+@RequestMapping("/pipes")
 public class PipeController {
 
     @Autowired

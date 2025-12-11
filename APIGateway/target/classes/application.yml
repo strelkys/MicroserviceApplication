@@ -10,13 +10,21 @@ spring:
           predicates:
             - Path=/auth/**
         - id: data-service
-          uri: http://localhost:8084  # ← Указываем URI DataService
+          uri: http://localhost:8084  
           predicates:
-            - Path=/api/pipes/**          # ← Все запросы, начинающиеся с /pipes/
+            - Path=/api/pipes/** 
+          filters:
+          - StripPrefix=1 # Удаляет первый уровень пути (например, /api)
         - id: ui-service
           uri: http://localhost:8082
           predicates:
             - Path=/, /reqvestPage/**
+        - id: analysis-service
+          uri: http://localhost:8000 
+          predicates:
+            - Path=/api/analyze-defects 
+          filters:
+            - StripPrefix=1 # Удаляет первый уровень пути (например, /api)
       globalcors:
         cors-configurations:
           '[/**]':

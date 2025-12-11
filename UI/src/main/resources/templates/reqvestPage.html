@@ -20,43 +20,50 @@
         <button id="showPipesBtn" class="btn btn-primary">Показать трубы</button>
     </div>
 
-    <div id="result" class="mt-4 alert alert-info" style="display:none;"></div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="pipesModal" tabindex="-1" aria-labelledby="pipesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="pipesModalLabel">Последние 100 труб</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Тип трубы</th>
-                                <th>Кол-во датчиков</th>
-                                <th>Данных на датчик</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pipesTableBody">
-                            <!-- Данные будут загружены сюда -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
+    <!-- Контейнер для таблицы труб -->
+    <div id="pipesContainer" class="mt-4" style="display: none;">
+        <h4>Последние 100 труб</h4>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Тип трубы</th>
+                        <th>Кол-во датчиков</th>
+                        <th>Данных на датчик</th>
+                    </tr>
+                </thead>
+                <tbody id="pipesTableBody">
+                    <!-- Данные будут загружены сюда -->
+                </tbody>
+            </table>
         </div>
     </div>
+
+    <!-- Блок для анализа -->
+    <div id="analysisBlock" class="mt-4" style="display: none;">
+        <h4>Анализ трубы</h4>
+        <div class="mb-3">
+            <label for="selectedPipeId" class="form-label">Выбранная труба (ID):</label>
+            <input type="text" class="form-control" id="selectedPipeId" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="analysisResult" class="form-label">Результат анализа:</label>
+            <textarea class="form-control" id="analysisResult" rows="3" readonly></textarea>
+        </div>
+        <button id="analyzeBtn" class="btn btn-warning">Анализировать</button>
+    </div>
+
+    <div id="result" class="mt-4 alert alert-info" style="display:none;"></div>
 </div>
 
 <script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 <script>
+    // --- Переменные для отслеживания выбранной трубы ---
+    let selectedPipeId = null;
+    let selectedPipeData = null;
+    // --- /Переменные ---
+
     document.getElementById('calcForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const expression = document.getElementById('expression').value;
@@ -80,29 +87,99 @@
     });
 
     document.getElementById('showPipesBtn').addEventListener('click', async function() {
-    const response = await fetch('http://localhost:8083/api/pipes/last100');
-    if (response.ok) {
-        const pipes = await response.json();
-        const tbody = document.getElementById('pipesTableBody');
-        tbody.innerHTML = ''; // Очистить перед заполнением
+        const response = await fetch('http://localhost:8083/api/pipes/last100');
+        if (response.ok) {
+            const pipes = await response.json();
+            const tbody = document.getElementById('pipesTableBody');
+            const container = document.getElementById('pipesContainer');
 
-        pipes.forEach(pipe => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${pipe.id || 'N/A'}</td>
-                <td>${pipe.type || 'N/A'}</td>
-                <td>${pipe.defectData ? pipe.defectData.length : 'N/A'}</td>
-                <td>${pipe.defectData && pipe.defectData[0] ? pipe.defectData[0].length : 'N/A'}</td>
-            `;
-            tbody.appendChild(row);
-        });
+            tbody.innerHTML = ''; // Очистить перед заполнением
 
-        const modal = new bootstrap.Modal(document.getElementById('pipesModal'));
-        modal.show();
-    } else {
-        alert('Ошибка при загрузке труб: ' + response.statusText);
-    }
-});
+            pipes.forEach(pipe => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${pipe.id || 'N/A'}</td>
+                    <td>${pipe.type || 'N/A'}</td>
+                    <td>${pipe.defectData ? pipe.defectData.length : 'N/A'}</td>
+                    <td>${pipe.defectData && pipe.defectData[0] ? pipe.defectData[0].length : 'N/A'}</td>
+                `;
+
+                // --- Обработчик клика по строке ---
+                row.addEventListener('click', function() {
+                    // Снимаем выделение с предыдущей строки
+                    document.querySelectorAll('#pipesTableBody tr').forEach(r => r.classList.remove('table-primary'));
+                    // Выделяем текущую строку
+                    this.classList.add('table-primary');
+
+                    // Сохраняем ID и данные выбранной трубы
+                    selectedPipeId = pipe.id;
+                    selectedPipeData = pipe.defectData;
+
+                    // Показываем блок анализа
+                    const analysisBlock = document.getElementById('analysisBlock');
+                    analysisBlock.style.display = 'block';
+
+                    // Обновляем ID в поле
+                    document.getElementById('selectedPipeId').value = selectedPipeId || 'N/A';
+                    // Очищаем предыдущий результат анализа
+                    document.getElementById('analysisResult').value = '';
+                });
+                // --- /Обработчик клика ---
+
+                tbody.appendChild(row);
+            });
+
+            container.style.display = 'block';
+        } else {
+            const container = document.getElementById('pipesContainer');
+            const tbody = document.getElementById('pipesTableBody');
+            tbody.innerHTML = `<tr><td colspan="4">Ошибка при загрузке труб: ${response.statusText}</td></tr>`;
+            container.style.display = 'block';
+        }
+    });
+
+    // --- Обработчик клика по кнопке "Анализировать" ---
+    document.getElementById('analyzeBtn').addEventListener('click', async function() {
+        if (selectedPipeId === null || selectedPipeData === null) {
+            alert('Пожалуйста, сначала выберите трубу из таблицы.');
+            return;
+        }
+
+        // Показываем, что идет анализ (например, делаем кнопку неактивной)
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Анализ...';
+
+        try {
+            // Отправляем данные defectData на микросервис через API Gateway
+            // Предполагаем, что API Gateway настроен на проксирование /api/analyze-defects
+            const response = await fetch('http://localhost:8083/api/analyze-defects', { // Используем путь через шлюз
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Если используется JWT, API Gateway должен добавить его из сессии
+                    // Authorization: `Bearer ${someTokenFromSession}`
+                },
+                body: JSON.stringify({ defect_data: selectedPipeData })
+            });
+
+             if (response.ok) {
+            const result = await response.json();
+            // Записываем только значение average_value в текстовое поле
+            document.getElementById('analysisResult').value = result.average_value || 'N/A';
+            } else {
+            document.getElementById('analysisResult').value = `Ошибка при анализе: ${response.status} - ${response.statusText}`;
+        }
+        } catch (error) {
+            console.error('Ошибка при вызове API анализа:', error);
+            document.getElementById('analysisResult').value = `Ошибка сети при вызове API анализа: ${error.message}`;
+        } finally {
+            // Восстанавливаем кнопку
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Анализировать';
+        }
+    });
+    // --- /Обработчик клика ---
 </script>
 </body>
 </html>

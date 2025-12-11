@@ -8,18 +8,23 @@ package ru.streltsov.microserviceapplication.dataservice.model;
  *
  * @author Александр
  */
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Arrays;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 @Entity
 @Table(name = "pipes")
 @Data
 @NoArgsConstructor
-
 @AllArgsConstructor
 @Builder
 public class DrillingPipe {
@@ -33,7 +38,10 @@ public class DrillingPipe {
     
     @Column(name = "defect_data", columnDefinition = "JSON")
     @JdbcTypeCode(SqlTypes.JSON)
+    @JsonDeserialize(using = DoubleArray2DDeserializer.class)
+    @JsonSerialize(using = DoubleArray2DSerializer.class)
     private double[][] defectData;
+    
 
    
     public DrillingPipe(String type, int sensorCount, int dataPerSensor) {
@@ -73,4 +81,26 @@ public class DrillingPipe {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public double[][] getDefectData() {
+        return defectData;
+    }
+
+    public void setDefectData(double[][] defectData) {
+        this.defectData = defectData;
+    }
+
+    public Long getId() {
+        return id;
+    }
+    
+    
 }

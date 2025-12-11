@@ -22,10 +22,10 @@ public class ProxyController {
     public ProxyController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
-    @PostMapping("/api/calculate")
-    public ResponseEntity<?> proxyCalculate(
-            @RequestBody Map<String, String> payload,
+/*
+    @PostMapping("/api/analyze-defects") // Добавляем новый endpoint
+    public ResponseEntity<?> proxyAnalyzeDefects(
+            @RequestBody Map<String, Object> payload, // Принимаем JSON-объект, содержащий defectData
             HttpSession session) {
 
         String token = (String) session.getAttribute("token");
@@ -40,15 +40,19 @@ public class ProxyController {
         HttpEntity<?> request = new HttpEntity<>(payload, headers);
 
         try {
+            // Отправляем на микросервис анализа через API Gateway
+            // Путь должен совпадать с тем, что вы настроили в шлюзе (например, /api/analyze-defects)
+            // Если ваш микросервис анализа слушает напрямую, используйте его адрес (например, http://localhost:8083/analyze-defects)
+            // Но лучше, чтобы всё проходило через API Gateway
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8081/api/calculate",
-                HttpMethod.POST,
-                request,
-                Map.class
+                    "http://localhost:8083/api/analyze-defects", // URL API Gateway
+                    HttpMethod.POST,
+                    request,
+                    Map.class
             );
             return ResponseEntity.ok(response.getBody());
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("message", e.getMessage()));
         }
-    }
+    }*/
 }
