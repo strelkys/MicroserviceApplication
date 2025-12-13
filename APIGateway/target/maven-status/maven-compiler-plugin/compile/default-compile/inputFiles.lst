@@ -1,3 +1,8 @@
 C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\ApiGatewayApplication.java
+C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\config\AnalysisServiceLoadBalancerConfig.java
+C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\config\AuthServiceLoadBalancerConfig.java
+C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\config\DataServiceLoadBalancerConfig.java
+C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\config\GatewayCorsConfig.java
+C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\config\StaticServiceInstanceListSupplier.java
 C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\JwtValidationFilter.java
 C:\Users\strel\Desktop\Java\Projects\MicroserviceApplication\APIGateway\src\main\java\ru\streltsov\microserviceapplication\apigateway\util\JwtUtil.java

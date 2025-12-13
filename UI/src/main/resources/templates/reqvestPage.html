@@ -87,7 +87,7 @@
     });
 
     document.getElementById('showPipesBtn').addEventListener('click', async function() {
-        const response = await fetch('http://localhost:8083/api/pipes/last100');
+        const response = await fetch('http://localhost:8083/data/pipes/last100');
         if (response.ok) {
             const pipes = await response.json();
             const tbody = document.getElementById('pipesTableBody');
@@ -153,7 +153,7 @@
         try {
             // Отправляем данные defectData на микросервис через API Gateway
             // Предполагаем, что API Gateway настроен на проксирование /api/analyze-defects
-            const response = await fetch('http://localhost:8083/api/analyze-defects', { // Используем путь через шлюз
+            const response = await fetch('http://localhost:8083/analysis/analyze-defects', { // Используем путь через шлюз
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

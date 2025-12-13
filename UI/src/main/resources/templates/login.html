@@ -35,10 +35,12 @@
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
 
-                const response = await fetch('http://localhost:8083/auth/login', {//отправка запроса на auth через ApiGateway
+                const response = await fetch('http://localhost:8083/auth/login', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({username, password})
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
                 });
              
 

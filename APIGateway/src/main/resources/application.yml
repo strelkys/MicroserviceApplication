@@ -2,32 +2,31 @@ server:
   port: 8083
 
 spring:
+  application:
+    name: api-gateway
+
   cloud:
     gateway:
       routes:
         - id: auth-service
-          uri: http://localhost:8081
+          uri: lb://auth-service
           predicates:
             - Path=/auth/**
         - id: data-service
-          uri: http://localhost:8084  
+          uri: lb://data-service
           predicates:
-            - Path=/api/pipes/** 
+            - Path=/data/**
           filters:
-          - StripPrefix=1 # Удаляет первый уровень пути (например, /api)
-        - id: ui-service
-          uri: http://localhost:8082
-          predicates:
-            - Path=/, /reqvestPage/**
+            - StripPrefix=1
         - id: analysis-service
-          uri: http://localhost:8000 
+          uri: lb://analysis-service
           predicates:
-            - Path=/api/analyze-defects 
+            - Path=/analysis/**
           filters:
-            - StripPrefix=1 # Удаляет первый уровень пути (например, /api)
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    reactor.netty.http.client: DEBUG

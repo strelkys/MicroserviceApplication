@@ -1,3 +1,8 @@
+ru\streltsov\microserviceapplication\apigateway\config\StaticServiceInstanceListSupplier.class
+ru\streltsov\microserviceapplication\apigateway\config\GatewayCorsConfig.class
+ru\streltsov\microserviceapplication\apigateway\config\AnalysisServiceLoadBalancerConfig.class
+ru\streltsov\microserviceapplication\apigateway\config\DataServiceLoadBalancerConfig.class
 ru\streltsov\microserviceapplication\apigateway\JwtValidationFilter.class
+ru\streltsov\microserviceapplication\apigateway\config\AuthServiceLoadBalancerConfig.class
 ru\streltsov\microserviceapplication\apigateway\util\JwtUtil.class
 ru\streltsov\microserviceapplication\apigateway\ApiGatewayApplication.class
