@@ -4,31 +4,14 @@
  */
 package ru.streltsov.microserviceapplication.ui;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
-
 /**
  *
  * @author Александр
  */
 @Controller
 public class UiController {
-
-    @Value("${auth.service.url:http://localhost:8081}")
-    private String authServiceUrl;
-
-    private final RestTemplate restTemplate = new RestTemplate();
 
     @GetMapping("/")
     public String index() {
@@ -43,27 +26,5 @@ public class UiController {
     @GetMapping("/reqvestPage")
     public String reqvestPage() {
         return "reqvestPage";
-    }
-
-    @PostMapping("/api/login")
-    @ResponseBody
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(credentials, headers);
-            
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                authServiceUrl + "/auth/login",
-                request,
-                Map.class
-            );
-            
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(503).body(Map.of("error", "AuthService недоступен: " + e.getMessage()));
-        }
     }
 }
