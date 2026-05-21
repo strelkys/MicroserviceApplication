@@ -88,7 +88,7 @@ public class ThickController {
             }
             
             // Генерируем или получаем существующую тепловую карту
-            String heatmapPath = thickDataService.generateHeatmap(rawFilePath);
+            String heatmapPath = thickDataService.generateHeatmap(rawFilePath, pipeId);
             
             File heatmapFile = new File(heatmapPath);
             if (!heatmapFile.exists()) {
@@ -102,6 +102,32 @@ public class ThickController {
                     .body(content);
         } catch (Exception e) {
             log.error("Error getting heatmap for pipe ID: {}", pipeId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * Комбинированный эндпоинт: экспорт + анализ + получение результата для UI
+     * POST /thick/process/{pipeId}
+     */
+    @PostMapping("/process/{pipeId}")
+    public ResponseEntity<AnalysisResult> processPipe(@PathVariable Long pipeId) {
+        try {
+            // Экспортируем данные в raw файл из базы Derby
+            String rawFilePath = thickDataService.exportThickToRaw(pipeId);
+            
+            if (rawFilePath == null) {
+                log.warn("No thick data found for pipe ID: {}", pipeId);
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Отправляем файл в Python сервис для анализа и получения результата
+            AnalysisResult result = thickDataService.analyzeData(rawFilePath, pipeId);
+            
+            log.info("Processed pipe ID {}: status={}", pipeId, result.getClassification());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error processing pipe ID: {}", pipeId, e);
             return ResponseEntity.internalServerError().build();
         }
     }
