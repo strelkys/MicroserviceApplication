@@ -48,7 +48,7 @@
                         const data = await response.json();
                         if (data.token) {
                             localStorage.setItem('jwtToken', data.token);
-                            window.location.href = '/reqvestPage';
+                            window.location.href = '/inspection';
                         } else {
                             alert('Ошибка: токен не получен');
                         }
