@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 @Entity
 @Table(name = "pipes")
 @Data
-@NoArgsConstructor
+//@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class DrillingPipe {
