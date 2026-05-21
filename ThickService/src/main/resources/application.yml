@@ -8,4 +8,4 @@ spring:
     url: jdbc:derby://localhost:1527/DefectUNPO
     username: tmk
     password: tmk
-    driver-class-name: org.apache.derby.jdbc.ClientDriver
+    driver-class-name: org.apache.derby.client.ClientDriver
