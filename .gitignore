@@ -1,31 +1,21 @@
 ```
-# Java/Maven specific
-target/
+# Compiled and build artifacts
 *.class
-*.jar
-*.war
-*.ear
-
-# IDE
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# Logs
+*.o
+*.obj
+*.out
+# Dependencies
+target/
+.m2/
+# Logs and temp files
 *.log
-
+*.tmp
+*.swp
 # Environment
 .env
 .env.local
 *.env.*
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Maven
-.mvn/
-mvnw
-mvnw.cmd
+# Editors
+.vscode/
+.idea/
 ```
