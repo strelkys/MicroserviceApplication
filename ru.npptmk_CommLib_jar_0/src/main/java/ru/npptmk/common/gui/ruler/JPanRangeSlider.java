@@ -1,0 +1,180 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+package ru.npptmk.common.gui.ruler;
+
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import static java.awt.image.ImageObserver.HEIGHT;
+import static java.awt.image.ImageObserver.WIDTH;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import ru.npptmk.common.gui.ruler.IRulerCoordChange;
+import ru.npptmk.common.gui.ruler.RangeSlider;
+
+/**
+ * В этой панели должен быть размещён только слайдер выбора диапазона
+ * @author KandybaOA
+ */
+public class JPanRangeSlider extends javax.swing.JPanel {
+        private IRulerCoordChange listener = null;
+    private RangeSlider rangeSlider = new RangeSlider();
+    private double wight;
+    /**шаг слайдера (чем больше цифра, тем выше точность). Например при
+     * SliderAccuracy=100, точность будет составлять 1/SliderAccuracy=0.01
+     * единицы на линейке*/
+    private int SliderAccuracy = 100;
+    /**
+     * Данный метод позволяет изменить шаг слайдера (чем больше цифра, тем выше
+     * точность). Например, при SliderAccuracy=100 точность будет составлять
+     * 1/SliderAccuracy=0.01 единицы на линейке
+     * @param SliderAccuracy - точность (int)
+     */
+    public void setSliderAccuracy(int SliderAccuracy) {
+        this.SliderAccuracy = SliderAccuracy;
+    }
+    /** длина линейки (определяет количество основных делений линейки)*/
+    private double lengthOfRuler = 10.0;
+    /**Максимальное значение на линейке*/
+    //Значения на которых выставлены ползунки
+    private double selectedVal1, selectedVal2;
+    
+    /**Метод изменяет длину линейки и слайдера, перерисовывая их заново
+     * @param lengthOfRuler - длина линейки
+     */
+    public void setLengthOfRuler(double lengthOfRuler) {
+        this.lengthOfRuler = lengthOfRuler;
+        initRangeSlider();
+    }
+    
+    
+    
+    public void setWight(double wight) {
+        this.wight = wight;
+    }
+
+    public void setListener(IRulerCoordChange listener) {
+        this.listener = listener;
+        initRangeSlider();
+    }
+    
+    public void setValue(double val){
+        rangeSlider.setValue((int) (val*SliderAccuracy));
+    }
+    
+    public void setUpperValue(double val){
+        rangeSlider.setUpperValue((int) (val*SliderAccuracy));
+    }
+    
+    /**
+     * Creates new form jFrameRangeSlider
+     */
+    public JPanRangeSlider() {
+        initComponents();
+        initRangeSlider();
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //Метод, содержащий все настройки слайдера диапазонов
+    public void initRangeSlider() {
+             
+       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));//и это надо вернуть             
+       setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));//это надо вернуть
+       
+        rangeSlider.setMinimum(0);
+        rangeSlider.setMaximum((int) (lengthOfRuler * SliderAccuracy));
+        this.setBackground(new Color(0,0,0,0));
+        this.setOpaque(false);
+        rangeSlider.setOpaque(false);
+       
+        //rangeSlider.setBorder(null);
+        //this.setBorder(null);
+        //rangeSlider.setBackground(new Color(0,0,0,0));
+        // Add listener to update display.
+        rangeSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                RangeSlider slider = (RangeSlider) e.getSource();
+                selectedVal1 = ((double)rangeSlider.getValue())/SliderAccuracy;
+                selectedVal2 = ((double)rangeSlider.getUpperValue())/SliderAccuracy;
+                if (listener!= null){
+                    listener.newValues(selectedVal1, selectedVal2);
+                }
+            }
+        });
+        add(rangeSlider, new GridBagConstraints(0, 2, 2, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        //rangeSlider.setSize(WIDTH, HEIGHT);
+        rangeSlider.setSize(WIDTH, HEIGHT);
+        rangeSlider.setValue(0);
+        rangeSlider.setUpperValue((int) (lengthOfRuler * SliderAccuracy));
+    }
+
+    
+    
+    
+    
+    
+    public void resetSliders(){
+        rangeSlider.setValue(0);
+        rangeSlider.setUpperValue((int) (lengthOfRuler * SliderAccuracy));
+    }
+
+    public double getSelectedVal1() {
+        return selectedVal1;
+    }
+
+    public double getSelectedVal2() {
+        return selectedVal2;
+    }
+    
+    
+    
+    
+    
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        setOpaque(false);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
+}
