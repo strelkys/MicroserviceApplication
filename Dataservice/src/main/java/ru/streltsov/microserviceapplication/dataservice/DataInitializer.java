@@ -16,7 +16,7 @@ import ru.streltsov.microserviceapplication.dataservice.service.PipeService;
  *
  * @author Александр
  */
-@Component
+//@Component
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired

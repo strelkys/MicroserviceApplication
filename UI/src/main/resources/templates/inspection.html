@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дефектоскопия труб: Результаты анализа</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5; /* Светло-серый фон */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
+            width: 100%;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #555;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* Контейнер для изображения с ФИКСИРОВАННЫМИ размерами */
+        .image-wrapper {
+            /* Размеры подгоните под ваше изображение, если нужно */
+            width: 800px;  
+            height: 400px; 
+            
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            display: block;
+        }
+
+        /* Заглушка, если изображения нет */
+        .placeholder-text {
+            color: #999;
+            font-size: 16px;
+            position: absolute;
+            z-index: 0;
+        }
+
+        /* Строка результата */
+        .result-status {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            height: 40px; /* Фиксируем высоту строки */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .status-good {
+            color: #2e7d32; /* Зеленый */
+        }
+
+        .status-defect {
+            color: #c62828; /* Красный */
+        }
+
+        .status-loading {
+            color: #757575; /* Серый */
+            font-size: 24px;
+        }
+
+        /* Кнопки */
+        .buttons-row {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-good {
+            background-color: #4caf50;
+        }
+        .btn-good:hover {
+            background-color: #43a047;
+        }
+
+        .btn-defect {
+            background-color: #f44336;
+        }
+        .btn-defect:hover {
+            background-color: #e53935;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Верхняя панель -->
+    <div class="top-bar">
+        <a href="/reqvestPage" class="back-btn">← Вернуться к запросу</a>
+        <div class="page-title">ID: 378471</div>
+        <div style="width: 140px;"></div> <!-- Пустышка для балансировки -->
+    </div>
+
+    <div class="main-container">
+        
+        <!-- Блок изображения с фиксированным размером -->
+        <div class="image-wrapper">
+            <span class="placeholder-text">Загрузка...</span>
+            <img id="inspection-image" src="" alt="Цветовая карта толщины" style="display:none;">
+        </div>
+
+        <!-- Результат анализа -->
+        <div id="result-text" class="result-status status-loading">
+            Ожидание данных...
+        </div>
+
+        <!-- Кнопки -->
+        <div class="buttons-row">
+            <button class="btn btn-good" onclick="sendDecision('good')">Годно</button>
+            <button class="btn btn-defect" onclick="sendDecision('defect')">Брак</button>
+        </div>
+
+    </div>
+
+    <script>
+        const INSPECTION_ID = 378471;
+        const imgElement = document.getElementById('inspection-image');
+        const resultText = document.getElementById('result-text');
+        const placeholderText = document.querySelector('.placeholder-text');
+
+        // Функция загрузки данных (ТЕСТОВЫЙ РЕЖИМ - без сервера)
+        async function loadData() {
+            console.log("Загрузка тестовых данных...");
+            
+            // Имитируем небольшую задержку для реалистичности
+            setTimeout(() => {
+                updateUI({});
+            }, 500);
+        }
+
+        // Обновление интерфейса (ТЕСТОВЫЙ РЕЖИМ)
+        function updateUI(data) {
+            // --- НАЧАЛО ТЕСТОВЫХ ДАННЫХ ---
+            
+            // ВАЖНО: Файл thick_378474.png должен лежать в той же папке, что и inspection.html
+            const imageToLoad = "thick_378474.png"; 
+
+            if (imageToLoad) {
+                imgElement.src = imageToLoad;
+                
+                // Когда картинка загрузится браузером
+                imgElement.onload = () => {
+                    imgElement.style.display = 'block';
+                    placeholderText.style.display = 'none';
+                };
+
+                // Если картинка не найдена
+                imgElement.onerror = () => {
+                    placeholderText.textContent = "Ошибка: файл thick_378474.png не найден рядом с HTML.";
+                    placeholderText.style.display = 'block';
+                    imgElement.style.display = 'none';
+                    console.error("Не удалось загрузить изображение. Проверьте наличие файла в папке.");
+                };
+            } else {
+                placeholderText.textContent = "Нет изображения";
+                placeholderText.style.display = 'block';
+                imgElement.style.display = 'none';
+            }
+
+            // Жестко фиксируем статус как "Годно" для теста
+            resultText.textContent = "Годно";
+            resultText.className = "result-status status-good";
+            
+            // --- КОНЕЦ ТЕСТОВЫХ ДАННЫХ ---
+        }
+
+        // Отправка решения оператором
+        function sendDecision(decision) {
+            const decisionText = decision === 'good' ? 'Годно' : 'Брак';
+            if(confirm(`Вы уверены, что хотите отметить как "${decisionText}"?`)) {
+                console.log(`Решение отправлено: ${decision} для ID ${INSPECTION_ID}`);
+                alert(`Решение "${decisionText}" принято.`);
+                // Здесь можно добавить логику перехода на следующую страницу
+            }
+        }
+
+        // Запуск при загрузке страницы
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Дефектоскопия труб</title>
+    <link href="/webjars/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2>Дефектоскопия труб: Результаты анализа</h2>
+
+    <!-- Блок для изображения -->
+    <div class="mt-4">
+        <h4>Цветовая карта толщины</h4>
+        <div class="text-center">
+            <img id="scanImage" src="" alt="Цветовая карта толщины" class="img-fluid border rounded" style="max-height: 500px; display: none;">
+        </div>
+    </div>
+
+    <!-- Блок для результата анализа -->
+    <div class="mt-4">
+        <h4>Результат анализа</h4>
+        <div class="alert alert-info" id="analysisResult" role="alert" style="display: none;">
+            <strong>Статус:</strong> <span id="statusText">Ожидание данных...</span>
+        </div>
+    </div>
+
+    <!-- Кнопки подтверждения -->
+    <div class="mt-4 d-flex justify-content-center gap-3">
+        <button id="approveBtn" class="btn btn-success btn-lg" disabled>Годно</button>
+        <button id="rejectBtn" class="btn btn-danger btn-lg" disabled>Брак</button>
+    </div>
+
+    <!-- Кнопка возврата -->
+    <div class="mt-4 text-center">
+        <a href="/reqvestPage" class="btn btn-secondary">Вернуться к запросу</a>
+    </div>
+</div>
+
+<script src="/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+    // --- Переменные для отслеживания состояния ---
+    let currentPipeId = null;
+    // --- /Переменные ---
+
+    // Функция для очистки страницы
+    function clearPage() {
+        document.getElementById('scanImage').src = '';
+        document.getElementById('scanImage').style.display = 'none';
+        document.getElementById('analysisResult').style.display = 'none';
+        document.getElementById('statusText').textContent = 'Ожидание данных...';
+        document.getElementById('approveBtn').disabled = true;
+        document.getElementById('rejectBtn').disabled = true;
+        currentPipeId = null;
+    }
+
+    // Обработчик кнопки "Вернуться к запросу"
+    document.querySelector('a[href="/reqvestPage"]').addEventListener('click', function(e) {
+        e.preventDefault();
+        clearPage();
+        window.location.href = '/reqvestPage';
+    });
+
+    // Обработчик кнопки "Годно"
+    document.getElementById('approveBtn').addEventListener('click', async function() {
+        if (!currentPipeId) return;
+
+        try {
+            // Отправляем подтверждение на сервер
+            const response = await fetch('/api/confirm-inspection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pipeId: currentPipeId, status: 'APPROVED' })
+            });
+
+            if (response.ok) {
+                alert('Результат подтвержден как "Годно".');
+                clearPage(); // Очищаем страницу после подтверждения
+            } else {
+                alert('Ошибка подтверждения: ' + response.status);
+            }
+        } catch (error) {
+            console.error('Ошибка при подтверждении:', error);
+            alert('Сетевая ошибка при подтверждении.');
+        }
+    });
+
+    // Обработчик кнопки "Брак"
+    document.getElementById('rejectBtn').addEventListener('click', async function() {
+        if (!currentPipeId) return;
+
+        try {
+            // Отправляем отмену на сервер
+            const response = await fetch('/api/confirm-inspection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pipeId: currentPipeId, status: 'REJECTED' })
+            });
+
+            if (response.ok) {
+                alert('Результат подтвержден как "Брак".');
+                clearPage(); // Очищаем страницу после отмены
+            } else {
+                alert('Ошибка отмены: ' + response.status);
+            }
+        } catch (error) {
+            console.error('Ошибка при отмене:', error);
+            alert('Сетевая ошибка при отмене.');
+        }
+    });
+
+    // --- Инициализация: Загрузка данных с сервера ---
+    // Предположим, что сервер отправляет данные на этот URL при готовности
+    // Например, через WebSocket или длинный опрос (long polling). Для простоты используем опрос каждые 2 секунды.
+    async function pollForData() {
+        try {
+            const response = await fetch('/api/inspection-data');
+            if (response.ok) {
+                const data = await response.json();
+
+                // Проверяем, есть ли новые данные
+                if (data.pipeId && data.imageUrl && data.status) {
+                    currentPipeId = data.pipeId;
+
+                    // Отображаем изображение
+                    document.getElementById('scanImage').src = data.imageUrl;
+                    document.getElementById('scanImage').style.display = 'block';
+
+                    // Отображаем результат анализа
+                    document.getElementById('statusText').textContent = data.status === 'APPROVED' ? 'Годно' : 'Брак';
+                    document.getElementById('analysisResult').style.display = 'block';
+
+                    // Включаем кнопки
+                    document.getElementById('approveBtn').disabled = false;
+                    document.getElementById('rejectBtn').disabled = false;
+
+                    // Останавливаем опрос, так как данные получены
+                    clearInterval(pollInterval);
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка при опросе:', error);
+        }
+    }
+
+    // Запускаем опрос каждые 2 секунды
+    const pollInterval = setInterval(pollForData, 2000);
+
+    // При загрузке страницы сразу делаем первый запрос
+    pollForData();
+</script>
+</body>
+</html>

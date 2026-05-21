@@ -67,6 +67,12 @@
             <artifactId>derbyclient</artifactId>
             <version>10.17.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20200518</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>

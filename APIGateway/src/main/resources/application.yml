@@ -24,6 +24,10 @@ spring:
             - Path=/analysis/**
           filters:
             - StripPrefix=1
+        - id: ui-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/, /reqvestPage/**, /api/inspection-data, /api/confirm-inspection
 
 logging:
   level:
