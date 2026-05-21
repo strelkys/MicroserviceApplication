@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -111,6 +112,28 @@ public class UiController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(503).body(Map.of("error", "AuthService недоступен: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/thick/process/{pipeId}")
+    @ResponseBody
+    public ResponseEntity<?> processPipe(@PathVariable Long pipeId) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                thickServiceUrl + "/thick/process/" + pipeId,
+                request,
+                Map.class
+            );
+            
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of("error", "ThickService недоступен: " + e.getMessage()));
         }
     }
 }
