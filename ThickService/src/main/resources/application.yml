@@ -1,0 +1,11 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: thick-service
+  datasource:
+    url: jdbc:derby://localhost:1527/DefectUNPO
+    username: tmk
+    password: tmk
+    driver-class-name: org.apache.derby.jdbc.ClientDriver
