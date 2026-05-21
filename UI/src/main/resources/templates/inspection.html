@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #eef2f5; /* Светло-серый фон */
+            background-color: #eef2f5;
             margin: 0;
             padding: 0;
             display: flex;
@@ -15,8 +15,6 @@
             align-items: center;
             min-height: 100vh;
         }
-
-        /* Верхняя панель */
         .top-bar {
             width: 100%;
             padding: 15px 20px;
@@ -28,7 +26,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             position: relative;
         }
-
         .back-btn {
             text-decoration: none;
             color: #555;
@@ -39,12 +36,10 @@
             transition: background 0.2s;
             z-index: 10;
         }
-
         .back-btn:hover {
             background-color: #f0f0f0;
             color: #000;
         }
-
         .page-title {
             font-size: 24px;
             font-weight: bold;
@@ -54,8 +49,6 @@
             transform: translateX(-50%);
             white-space: nowrap;
         }
-
-        /* Основной контейнер */
         .main-container {
             display: flex;
             flex-direction: column;
@@ -66,13 +59,9 @@
             padding: 0 20px;
             box-sizing: border-box;
         }
-
-        /* Контейнер для изображения с ФИКСИРОВАННЫМИ размерами */
         .image-wrapper {
-            /* Размеры подгоните под ваше изображение, если нужно */
-            width: 800px;  
-            height: 400px; 
-            
+            width: 800px;
+            height: 400px;
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -84,54 +73,36 @@
             position: relative;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-
         .image-wrapper img {
             width: 100%;
             height: 100%;
-            object-fit: contain; 
+            object-fit: contain;
             display: block;
         }
-
-        /* Заглушка, если изображения нет */
         .placeholder-text {
             color: #999;
             font-size: 16px;
             position: absolute;
             z-index: 0;
         }
-
-        /* Строка результата */
         .result-status {
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 25px;
-            height: 40px; /* Фиксируем высоту строки */
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
         }
-
-        .status-good {
-            color: #2e7d32; /* Зеленый */
-        }
-
-        .status-defect {
-            color: #c62828; /* Красный */
-        }
-
-        .status-loading {
-            color: #757575; /* Серый */
-            font-size: 24px;
-        }
-
-        /* Кнопки */
+        .status-good { color: #2e7d32; }
+        .status-defect { color: #c62828; }
+        .status-loading { color: #757575; font-size: 24px; }
         .buttons-row {
             display: flex;
             gap: 30px;
             margin-bottom: 40px;
         }
-
         .btn {
             padding: 15px 40px;
             font-size: 20px;
@@ -143,121 +114,109 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: transform 0.1s, box-shadow 0.1s;
         }
-
         .btn:active {
             transform: translateY(2px);
             box-shadow: 0 2px 3px rgba(0,0,0,0.1);
         }
-
-        .btn-good {
-            background-color: #4caf50;
+        .btn-good { background-color: #4caf50; }
+        .btn-good:hover { background-color: #43a047; }
+        .btn-defect { background-color: #f44336; }
+        .btn-defect:hover { background-color: #e53935; }
+        .error-message {
+            color: #c62828;
+            font-size: 18px;
+            margin-top: 20px;
+            display: none;
         }
-        .btn-good:hover {
-            background-color: #43a047;
-        }
-
-        .btn-defect {
-            background-color: #f44336;
-        }
-        .btn-defect:hover {
-            background-color: #e53935;
-        }
-
     </style>
 </head>
 <body>
-
-    <!-- Верхняя панель -->
     <div class="top-bar">
         <a href="/reqvestPage" class="back-btn">← Вернуться к запросу</a>
-        <div class="page-title">ID: 378471</div>
-        <div style="width: 140px;"></div> <!-- Пустышка для балансировки -->
+        <div class="page-title" id="page-title">Загрузка...</div>
+        <div style="width: 140px;"></div>
     </div>
-
     <div class="main-container">
-        
-        <!-- Блок изображения с фиксированным размером -->
         <div class="image-wrapper">
             <span class="placeholder-text">Загрузка...</span>
             <img id="inspection-image" src="" alt="Цветовая карта толщины" style="display:none;">
         </div>
-
-        <!-- Результат анализа -->
-        <div id="result-text" class="result-status status-loading">
-            Ожидание данных...
-        </div>
-
-        <!-- Кнопки -->
+        <div id="result-text" class="result-status status-loading">Ожидание данных...</div>
         <div class="buttons-row">
-            <button class="btn btn-good" onclick="sendDecision('good')">Годно</button>
-            <button class="btn btn-defect" onclick="sendDecision('defect')">Брак</button>
+            <button class="btn btn-good" onclick="sendDecision('GOOD')">Годно</button>
+            <button class="btn btn-defect" onclick="sendDecision('DEFECT')">Брак</button>
         </div>
-
+        <div id="error-message" class="error-message"></div>
     </div>
-
     <script>
-        const INSPECTION_ID = 378471;
+        let currentPipeId = null;
+        let currentPredictionClass = null;
         const imgElement = document.getElementById('inspection-image');
         const resultText = document.getElementById('result-text');
         const placeholderText = document.querySelector('.placeholder-text');
+        const pageTitle = document.getElementById('page-title');
+        const errorMessage = document.getElementById('error-message');
 
         async function loadData() {
             try {
-                // Запрос к thick-service для обработки трубы
-                const response = await fetch(`/thick/process/${INSPECTION_ID}`, {
-                    method: 'POST'
-                });
-
-                if (!response.ok) throw new Error('Ошибка обработки');
-
+                const response = await fetch('/thick/start', { method: 'POST' });
+                if (!response.ok) throw new Error('Ошибка получения данных');
                 const data = await response.json();
-
-                // Загрузка тепловой карты
-                const heatmapUrl = `/thick/heatmap/${INSPECTION_ID}`;
+                currentPipeId = data.pipeId;
+                currentPredictionClass = data.predictionClass;
+                pageTitle.textContent = 'ID трубы: ' + currentPipeId;
+                const heatmapUrl = '/thick/heatmap/' + currentPipeId;
                 imgElement.src = heatmapUrl;
                 imgElement.onload = () => {
                     imgElement.style.display = 'block';
                     placeholderText.style.display = 'none';
                 };
-
-                // Отображение результата
-                resultText.textContent = data.classification; // "Годно" или "Брак"
-                resultText.className = data.classification === "Годно" 
-                    ? "result-status status-good" 
-                    : "result-status status-defect";
-
+                resultText.textContent = data.classification;
+                resultText.className = data.classification === "Годно" ? "result-status status-good" : "result-status status-defect";
             } catch (error) {
                 console.error('Ошибка:', error);
                 resultText.textContent = 'Ошибка обработки';
+                pageTitle.textContent = 'Ошибка';
             }
         }
 
-        function sendDecision(decision) {
-            // Отправка решения в базу DefectVKR
-            fetch(`/api/save-decision`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pipeId: INSPECTION_ID,
-                    decision: decision
-                })
-            }).then(() => {
-                // Переход к следующей трубе
-                window.location.href = '/reqvestPage';
-            });
-        }
-
-        // Отправка решения оператором
-        function sendDecision(decision) {
-            const decisionText = decision === 'good' ? 'Годно' : 'Брак';
-            if(confirm(`Вы уверены, что хотите отметить как "${decisionText}"?`)) {
-                console.log(`Решение отправлено: ${decision} для ID ${INSPECTION_ID}`);
-                alert(`Решение "${decisionText}" принято.`);
-                // Здесь можно добавить логику перехода на следующую страницу
+        async function sendDecision(operatorDecision) {
+            if (currentPipeId === null) { alert('Нет данных для сохранения'); return; }
+            const decisionText = operatorDecision === 'GOOD' ? 'Годно' : 'Брак';
+            if(!confirm('Вы уверены, что хотите отметить как "' + decisionText + '"?')) { return; }
+            try {
+                const saveResponse = await fetch('/api/save-decision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pipeId: currentPipeId,
+                        predictedClass: currentPredictionClass !== null ? currentPredictionClass : (operatorDecision === 'GOOD' ? 0 : 1),
+                        operatorDecision: operatorDecision
+                    })
+                });
+                const saveResult = await saveResponse.json();
+                if (saveResult.success) {
+                    const continueResponse = await fetch('/thick/continue', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lastPipeId: currentPipeId })
+                    });
+                    if (continueResponse.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Все трубы обработаны!');
+                        window.location.href = '/reqvestPage';
+                    }
+                } else {
+                    errorMessage.textContent = 'Ошибка сохранения: ' + saveResult.message;
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении:', error);
+                errorMessage.textContent = 'Ошибка связи с сервером';
+                errorMessage.style.display = 'block';
             }
         }
-
-        // Запуск при загрузке страницы
         window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>

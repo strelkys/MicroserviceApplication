@@ -9,7 +9,7 @@ import ru.streltsov.microserviceapplication.thickservice.service.ThickDataServic
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * Контроллер для работы с данными толщинометрии
@@ -107,27 +107,65 @@ public class ThickController {
     }
     
     /**
-     * Комбинированный эндпоинт: экспорт + анализ + получение результата для UI
-     * POST /thick/process/{pipeId}
+     * POST /thick/start - Начать работу: получить следующую трубу для анализа
+     * Возвращает результат анализа следующей трубы
      */
-    @PostMapping("/process/{pipeId}")
-    public ResponseEntity<AnalysisResult> processPipe(@PathVariable Long pipeId) {
+    @PostMapping("/start")
+    public ResponseEntity<AnalysisResult> startWork() {
         try {
-            // Экспортируем данные в raw файл из базы Derby
-            String rawFilePath = thickDataService.exportThickToRaw(pipeId);
+            // Получаем номер последней проанализированной трубы из DataService
+            Long lastPipeNumber = thickDataService.getLastAnalyzedPipeNumber();
             
-            if (rawFilePath == null) {
-                log.warn("No thick data found for pipe ID: {}", pipeId);
+            log.info("Последняя проанализированная труба: {}", lastPipeNumber);
+            
+            // Обрабатываем следующую трубу
+            AnalysisResult result = thickDataService.processNextPipe(lastPipeNumber);
+            
+            if (result == null) {
+                log.warn("Нет труб для обработки");
                 return ResponseEntity.notFound().build();
             }
             
-            // Отправляем файл в Python сервис для анализа и получения результата
-            AnalysisResult result = thickDataService.analyzeData(rawFilePath, pipeId);
-            
-            log.info("Processed pipe ID {}: status={}", pipeId, result.getClassification());
+            log.info("Начало работы: обработана труба ID={}, classification={}", 
+                     result.getPipeId(), result.getClassification());
             return ResponseEntity.ok(result);
+            
         } catch (Exception e) {
-            log.error("Error processing pipe ID: {}", pipeId, e);
+            log.error("Error starting work: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * POST /thick/continue - Продолжить работу: получить следующую трубу после указанной
+     * @param lastPipeId номер последней обработанной трубы
+     * @return результат анализа следующей трубы
+     */
+    @PostMapping("/continue")
+    public ResponseEntity<AnalysisResult> continueWork(@RequestBody Map<String, Long> request) {
+        try {
+            Long lastPipeId = request.get("lastPipeId");
+            
+            if (lastPipeId == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            log.info("Продолжение работы после трубы ID: {}", lastPipeId);
+            
+            // Обрабатываем следующую трубу
+            AnalysisResult result = thickDataService.processNextPipe(lastPipeId);
+            
+            if (result == null) {
+                log.warn("Нет труб для обработки после ID={}", lastPipeId);
+                return ResponseEntity.notFound().build();
+            }
+            
+            log.info("Продолжение работы: обработана труба ID={}, classification={}", 
+                     result.getPipeId(), result.getClassification());
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("Error continuing work: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

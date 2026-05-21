@@ -15,4 +15,5 @@ public class AnalysisResult {
     private String classification; // "Годно" или "Брак"
     private String heatmapImagePath; // Путь к изображению тепловой карты
     private double averageValue;
+    private Integer predictionClass; // 0 - годно, 1 - брак (предсказание нейросети)
 }
