@@ -45,6 +45,11 @@ public class UiController {
         return "reqvestPage";
     }
 
+    @GetMapping("/inspection")
+    public String inspection() {
+        return "inspection";
+    }
+
     @PostMapping("/api/login")
     @ResponseBody
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
