@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ru.streltsov.microserviceapplication.ui;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 /**
- *
- * @author Александр
+ * Контроллер UI для проксирования запросов к микросервисам
  */
 @Controller
 public class UiController {
@@ -31,6 +26,9 @@ public class UiController {
     
     @Value("${thick.service.url:http://localhost:8080}")
     private String thickServiceUrl;
+    
+    @Value("${data.service.url:http://localhost:8082}")
+    private String dataServiceUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
     
@@ -50,9 +48,38 @@ public class UiController {
         }
     }
     
-    @PostMapping("/api/saveDecision")
+    /**
+     * POST /api/save-decision - Сохранить решение оператора через DataService
+     */
+    @PostMapping("/api/save-decision")
     @ResponseBody
     public ResponseEntity<?> saveDecision(@RequestBody Map<String, Object> decision) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(decision, headers);
+            
+            // Отправляем данные в DataService для сохранения в базу DefectVKR
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                dataServiceUrl + "/pipes/save-result",
+                request,
+                Map.class
+            );
+            
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of(
+                "success", false,
+                "message", "Ошибка сохранения: " + e.getMessage()
+            ));
+        }
+    }
+    
+    @PostMapping("/api/saveDecision")
+    @ResponseBody
+    public ResponseEntity<?> saveDecisionOld(@RequestBody Map<String, Object> decision) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -112,6 +139,65 @@ public class UiController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(503).body(Map.of("error", "AuthService недоступен: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Прокси для ThickService /thick/start
+     */
+    @PostMapping("/thick/start")
+    @ResponseBody
+    public ResponseEntity<?> startWork() {
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                thickServiceUrl + "/thick/start",
+                null,
+                Map.class
+            );
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of("error", "ThickService недоступен: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Прокси для ThickService /thick/continue
+     */
+    @PostMapping("/thick/continue")
+    @ResponseBody
+    public ResponseEntity<?> continueWork(@RequestBody Map<String, Long> request) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Long>> entity = new HttpEntity<>(request, headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                thickServiceUrl + "/thick/continue",
+                entity,
+                Map.class
+            );
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of("error", "ThickService недоступен: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Прокси для ThickService /thick/heatmap/{pipeId}
+     */
+    @GetMapping("/thick/heatmap/{pipeId}")
+    @ResponseBody
+    public byte[] getHeatmap(@PathVariable Long pipeId) {
+        try {
+            return restTemplate.getForObject(
+                thickServiceUrl + "/thick/heatmap/" + pipeId,
+                byte[].class
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new byte[0];
         }
     }
     

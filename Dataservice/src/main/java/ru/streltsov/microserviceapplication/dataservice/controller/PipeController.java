@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.streltsov.microserviceapplication.dataservice.model.DrillingPipe;
 import ru.streltsov.microserviceapplication.dataservice.service.PipeService;
+import ru.streltsov.microserviceapplication.dataservice.service.AnalysisResultService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -23,6 +25,9 @@ public class PipeController {
 
     @Autowired
     private PipeService pipeService;
+
+    @Autowired
+    private AnalysisResultService analysisResultService;
 
     // GET /pipes — получить все трубы
     @GetMapping
@@ -82,5 +87,48 @@ public class PipeController {
         int start = Math.max(0, size - 100);
         List<DrillingPipe> last100 = allPipes.subList(start, size);
         return ResponseEntity.ok(last100);
+    }
+    
+    /**
+     * GET /pipes/last-analyzed - Получить номер последней проанализированной трубы
+     * Возвращает -1 если записей нет или таблица не существует
+     */
+    @GetMapping("/last-analyzed")
+    public ResponseEntity<Map<String, Long>> getLastAnalyzedPipe() {
+        Long lastPipeNumber = analysisResultService.getLastAnalyzedPipeNumber();
+        return ResponseEntity.ok(Map.of("pipeNumber", lastPipeNumber));
+    }
+    
+    /**
+     * POST /pipes/save-result - Сохранить результат анализа трубы
+     * @param request запрос с pipeId, predictedClass, operatorDecision
+     * @return результат операции сохранения
+     */
+    @PostMapping("/save-result")
+    public ResponseEntity<Map<String, Object>> saveAnalysisResult(@RequestBody Map<String, Object> request) {
+        try {
+            Long pipeId = Long.valueOf(request.get("pipeId").toString());
+            Integer predictedClass = Integer.valueOf(request.get("predictedClass").toString());
+            String operatorDecision = request.get("operatorDecision").toString();
+            
+            boolean success = analysisResultService.saveAnalysisResult(pipeId, predictedClass, operatorDecision);
+            
+            if (success) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Результат успешно сохранен"
+                ));
+            } else {
+                return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "Ошибка при сохранении результата"
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "Ошибка: " + e.getMessage()
+            ));
+        }
     }
 }

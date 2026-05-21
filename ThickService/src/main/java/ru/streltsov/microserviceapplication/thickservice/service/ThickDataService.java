@@ -23,15 +23,18 @@ import java.util.Map;
 @Service
 public class ThickDataService {
 
-    private static final String DB_URL = "jdbc:derby://localhost:1527/DefectUNPO";
+    private static final String DB_URL_UNPO = "jdbc:derby://localhost:1527/DefectUNPO";
     private static final String DB_USER = "tmk";
     private static final String DB_PASSWORD = "tmk";
     
-    // Директория для сохранения raw файлов и тепловых карт
-    private static final String OUTPUT_DIR = System.getProperty("java.io.tmpdir") + "/thick_data";
-    
     // URL Python микросервиса для анализа
     private static final String THICK_SERVICE_URL = "http://localhost:8001";
+    
+    // URL DataService для получения последней записи
+    private static final String DATA_SERVICE_URL = "http://localhost:8082";
+    
+    // Директория для сохранения raw файлов и тепловых карт
+    private static final String OUTPUT_DIR = System.getProperty("java.io.tmpdir") + "/thick_data";
     
     private final RestTemplate restTemplate;
 
@@ -39,6 +42,73 @@ public class ThickDataService {
         this.restTemplate = restTemplate;
         // Создаем директорию для выходных файлов
         new File(OUTPUT_DIR).mkdirs();
+    }
+
+    /**
+     * Получить номер последней проанализированной трубы из DataService
+     * @return номер трубы или -1 если записей нет
+     */
+    public Long getLastAnalyzedPipeNumber() {
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                DATA_SERVICE_URL + "/pipes/last-analyzed",
+                Map.class
+            );
+            
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                Number pipeNumber = (Number) body.get("pipeNumber");
+                if (pipeNumber != null) {
+                    return pipeNumber.longValue();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Ошибка получения последнего номера трубы из DataService: {}", e.getMessage());
+        }
+        return -1L;
+    }
+
+    /**
+     * Найти следующую трубу после указанной в базе DefectUNPO
+     * @param lastPipeNumber номер последней проанализированной трубы
+     * @return ID следующей трубы или null если не найдено
+     */
+    public Long findNextPipe(Long lastPipeNumber) {
+        String query;
+        long paramValue;
+        
+        if (lastPipeNumber == -1) {
+            // Если -1, берем трубу с наименьшим номером
+            query = "SELECT MIN(tr.ID) as NEXT_ID FROM TMK.TUBERESULTS tr WHERE tr.THICKS IS NOT NULL";
+            paramValue = 0;
+        } else {
+            // Ищем следующую запись после lastPipeNumber
+            query = "SELECT MIN(tr.ID) as NEXT_ID FROM TMK.TUBERESULTS tr " +
+                    "WHERE tr.ID > ? AND tr.THICKS IS NOT NULL";
+            paramValue = lastPipeNumber;
+        }
+        
+        try (Connection conn = DriverManager.getConnection(DB_URL_UNPO, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            if (lastPipeNumber != -1) {
+                stmt.setLong(1, paramValue);
+            }
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Long nextId = rs.getLong("NEXT_ID");
+                    if (!rs.wasNull()) {
+                        log.info("Найдена следующая труба: ID={}", nextId);
+                        return nextId;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Ошибка поиска следующей трубы: {}", e.getMessage());
+        }
+        
+        return null;
     }
 
     /**
@@ -52,7 +122,7 @@ public class ThickDataService {
                        "INNER JOIN TMK.TUBE t ON tr.TUBEID = t.ID " +
                        "WHERE tr.ID = ? AND tr.THICKS IS NOT NULL";
         
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = DriverManager.getConnection(DB_URL_UNPO, DB_USER, DB_PASSWORD);
              PreparedStatement stmt = conn.prepareStatement(query)) {
             
             stmt.setLong(1, pipeId);
@@ -241,6 +311,12 @@ public class ThickDataService {
                     result.setAverageValue(avgThickness);
                 }
                 
+                // Получаем prediction_class
+                Integer predictionClass = (Integer) resultData.get("prediction_class");
+                if (predictionClass != null) {
+                    result.setPredictionClass(predictionClass);
+                }
+                
                 // Генерируем heatmap через отдельный запрос или используем сохраненный
                 String heatmapPath = generateHeatmap(rawFilePath, pipeId);
                 result.setHeatmapImagePath(heatmapPath);
@@ -258,6 +334,40 @@ public class ThickDataService {
         result.setClassification("Годно");
         result.setHeatmapImagePath(generateHeatmap(rawFilePath, pipeId));
         result.setAverageValue(0.0);
+        result.setPredictionClass(0);
+        return result;
+    }
+    
+    /**
+     * Полный процесс обработки трубы: получение следующей трубы, экспорт, анализ
+     * @param lastPipeNumber номер последней проанализированной трубы (-1 если это первый запуск)
+     * @return Результат анализа или null если труб больше нет
+     */
+    public AnalysisResult processNextPipe(Long lastPipeNumber) {
+        // Находим следующую трубу
+        Long nextPipeId = findNextPipe(lastPipeNumber);
+        
+        if (nextPipeId == null) {
+            log.warn("Больше нет труб для обработки после pipeId={}", lastPipeNumber);
+            return null;
+        }
+        
+        // Экспортируем данные в raw файл
+        String rawFilePath = exportThickToRaw(nextPipeId);
+        
+        if (rawFilePath == null) {
+            log.warn("Нет данных толщинометрии для трубы ID: {}", nextPipeId);
+            return null;
+        }
+        
+        // Отправляем файл в Python сервис для анализа и получения результата
+        AnalysisResult result = analyzeData(rawFilePath, nextPipeId);
+        
+        if (result != null) {
+            log.info("Processed pipe ID {}: status={}, predictionClass={}", 
+                     nextPipeId, result.getClassification(), result.getPredictionClass());
+        }
+        
         return result;
     }
 }
