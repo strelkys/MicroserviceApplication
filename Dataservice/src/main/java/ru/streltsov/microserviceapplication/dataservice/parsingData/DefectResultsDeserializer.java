@@ -4,7 +4,7 @@
 
 package ru.streltsov.microserviceapplication.dataservice.parsingData;
 
-import ru.streltsov.microserviceapplication.dataservice.parsingData.DefectResults;
+import ru.npptmk.common.defectoscope.DefectResults;
 
 import java.io.*;
 /**
@@ -37,6 +37,7 @@ public class DefectResultsDeserializer {
                 results = (DefectResults) obj;
             } else {
                 System.err.println("Ошибка: объект в файле не является экземпляром DefectResults");
+                System.err.println("Тип объекта в файле: " + (obj != null ? obj.getClass().getName() : "null"));
             }
 
         } catch (IOException e) {
