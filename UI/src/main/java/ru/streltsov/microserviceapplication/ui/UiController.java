@@ -27,8 +27,50 @@ public class UiController {
 
     @Value("${auth.service.url:http://localhost:8081}")
     private String authServiceUrl;
+    
+    @Value("${thick.service.url:http://localhost:8080}")
+    private String thickServiceUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    
+    @PostMapping("/api/getNextPipe")
+    @ResponseBody
+    public ResponseEntity<?> getNextPipe() {
+        try {
+            // Запрос к ThickService для получения следующей трубы
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                thickServiceUrl + "/thick/next-pipe",
+                Map.class
+            );
+            return ResponseEntity.ok(response.getBody());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of("error", "ThickService недоступен: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/api/saveDecision")
+    @ResponseBody
+    public ResponseEntity<?> saveDecision(@RequestBody Map<String, Object> decision) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(decision, headers);
+            
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                thickServiceUrl + "/thick/save-decision",
+                request,
+                Map.class
+            );
+            
+            // После сохранения решения получаем следующую трубу
+            return getNextPipe();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(503).body(Map.of("error", "Ошибка сохранения: " + e.getMessage()));
+        }
+    }
 
     @GetMapping("/")
     public String index() {
